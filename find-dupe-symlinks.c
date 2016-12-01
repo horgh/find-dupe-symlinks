@@ -45,8 +45,8 @@ __find_symlinks(const char * const, const bool);
 static char *
 __canonicalize_path(const char * const);
 static bool
-__symlink_exists(const struct __symlink * const,
-		const char * const);
+__report_symlinks_with_target(const struct __symlink * const,
+		const char * const, const char * const);
 static void
 __destroy_symlinks(struct __symlink * const);
 static struct __symlink *
@@ -79,10 +79,9 @@ int main(int argc, char * * argv)
 	// with all those following it.
 	// Yes, O(n^2).
 	while (link_ptr->next) {
-		if (__symlink_exists(link_ptr->next, link_ptr->target_path)) {
-			printf("Duplicate symlink found: %s and %s both link to %s\n",
-					link_ptr->link_path, link_ptr->next->link_path,
-					link_ptr->target_path);
+		if (!__report_symlinks_with_target(link_ptr->next, link_ptr->link_path,
+					link_ptr->target_path)) {
+			printf("Problem reporting symlinks\n");
 		}
 
 		link_ptr = link_ptr->next;
@@ -410,15 +409,16 @@ __append_symlinks(struct __symlink * target, struct __symlink * source)
 
 // Check if there is a symlink in links with the given target path.
 static bool
-__symlink_exists(const struct __symlink * const links,
-		const char * const target_path)
+__report_symlinks_with_target(const struct __symlink * const links,
+		const char * const link_path, const char * const target_path)
 {
 	if (!links) {
 		return false;
 	}
 
-	if (!target_path || strlen(target_path) == 0) {
-		printf("__symlink_exists: %s\n", strerror(EINVAL));
+	if (!link_path || strlen(link_path) == 0 ||
+			!target_path || strlen(target_path) == 0) {
+		printf("__report_symlinks_with_target: %s\n", strerror(EINVAL));
 		return false;
 	}
 
@@ -426,11 +426,14 @@ __symlink_exists(const struct __symlink * const links,
 
 	while (link_ptr) {
 		if (strcmp(link_ptr->target_path, target_path) == 0) {
-			return true;
+			printf("Duplicate symlink found: %s and %s both link to %s\n", link_path,
+					link_ptr->link_path, target_path);
+			link_ptr = link_ptr->next;
+			continue;
 		}
 
 		link_ptr = link_ptr->next;
 	}
 
-	return false;
+	return true;
 }
