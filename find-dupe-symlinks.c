@@ -62,14 +62,14 @@ int main(int argc, char * * argv)
 		printf("\n");
 		printf("  [-v]             Enable verbose output.\n");
 		printf("\n");
-		exit(1);
+		return 1;
 	}
 
 	struct __symlink * links = __find_symlinks(args->start_dir, args->verbose);
 	if (!links) {
 		printf("No links found\n");
 		__destroy_args(args);
-		exit(1);
+		return 1;
 	}
 
 	__destroy_args(args);
